@@ -115,6 +115,8 @@ AUTH_USERNAME=admin AUTH_PASSWORD=secretpass ./lovepdf
 4. Preview the image
 5. Process and download the compressed file
 
+### Password Remove from PDF
+
 Note: Uses high-quality Catmull-Rom interpolation to maintain image quality during resizing.
 
 ## Building for Different Platforms
