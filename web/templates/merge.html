@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge PDFs - LovePDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="/">LovePDF</a></h1>
+            <p class="subtitle">Merge PDFs</p>
+        </header>
+
+        <main>
+            <div class="upload-area">
+                <form id="mergeForm" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <input type="file" id="fileInput" name="files" accept=".pdf" multiple required>
+                        <label for="fileInput" class="upload-label">
+                            <span>Choose PDFs or drag and drop (multiple files)</span>
+                        </label>
+                    </div>
+
+                    <div id="fileList" class="file-list" style="display: none;">
+                        <h3>Files to merge (drag to reorder):</h3>
+                        <div id="fileItems"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Merge PDFs</button>
+                </form>
+            </div>
+
+            <div id="progress" class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Merging PDFs...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <a href="/">← Back to Home</a>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

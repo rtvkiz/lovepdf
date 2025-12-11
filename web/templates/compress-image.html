@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compress Image - LovePDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="/">LovePDF</a></h1>
+            <p class="subtitle">Compress Image</p>
+        </header>
+
+        <main>
+            <div class="upload-area">
+                <form id="compressImageForm" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <input type="file" id="fileInput" name="file" accept="image/jpeg,image/jpg,image/png,image/webp" required>
+                        <label for="fileInput" class="upload-label">
+                            <span>Choose Image or drag and drop</span>
+                            <span class="file-types">(JPEG, PNG, WebP)</span>
+                        </label>
+                    </div>
+
+                    <div id="fileInfo" class="file-info" style="display: none;"></div>
+
+                    <div id="imagePreview" class="image-preview" style="display: none;">
+                        <h3>Preview:</h3>
+                        <img id="previewImg" src="" alt="Preview">
+                    </div>
+
+                    <div class="options">
+                        <h3>Compression Settings</h3>
+
+                        <div class="option">
+                            <label for="quality">Quality: <span id="qualityValue">80</span>%</label>
+                            <input type="range" id="quality" name="quality" min="1" max="100" value="80">
+                            <p class="option-hint">Higher quality = larger file size</p>
+                        </div>
+
+                        <div class="option">
+                            <label for="format">Output Format:</label>
+                            <select id="format" name="format">
+                                <option value="same">Same as original</option>
+                                <option value="jpeg">JPEG</option>
+                                <option value="png">PNG</option>
+                                <option value="webp">WebP (smaller)</option>
+                            </select>
+                        </div>
+
+                        <div class="option">
+                            <input type="checkbox" id="resize" name="resize">
+                            <label for="resize">Resize image</label>
+                            <div id="resizeOptions" style="display: none; margin-left: 30px; margin-top: 10px;">
+                                <label>Max width: <input type="number" id="maxWidth" name="maxWidth" placeholder="e.g., 1920" min="1"></label>
+                                <label style="margin-left: 15px;">Max height: <input type="number" id="maxHeight" name="maxHeight" placeholder="e.g., 1080" min="1"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Compress Image</button>
+                </form>
+            </div>
+
+            <div id="progress" class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Compressing image...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <a href="/">← Back to Home</a>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split PDF - LovePDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="/">LovePDF</a></h1>
+            <p class="subtitle">Split PDF</p>
+        </header>
+
+        <main>
+            <div class="upload-area">
+                <form id="splitForm" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <input type="file" id="fileInput" name="file" accept=".pdf" required>
+                        <label for="fileInput" class="upload-label">
+                            <span>Choose PDF or drag and drop</span>
+                        </label>
+                    </div>
+
+                    <div id="fileInfo" class="file-info" style="display: none;"></div>
+
+                    <div class="options">
+                        <h3>Split Options</h3>
+                        <div class="option">
+                            <input type="radio" id="allPages" name="splitMode" value="all" checked>
+                            <label for="allPages">Extract all pages as separate files</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="customRange" name="splitMode" value="range">
+                            <label for="customRange">Extract specific pages (e.g., 1-3,5,7-9)</label>
+                            <input type="text" id="pageRange" name="pageRange" placeholder="1-3,5,7-9" disabled>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Split PDF</button>
+                </form>
+            </div>
+
+            <div id="progress" class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Processing...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <a href="/">← Back to Home</a>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
