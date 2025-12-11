@@ -57,6 +57,11 @@ func CompressImagePage(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "compress-image.html")
 }
 
+// RemovePasswordPage renders the remove password page
+func RemovePasswordPage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "remove-password.html")
+}
+
 // HandleSplit handles PDF splitting requests
 func HandleSplit(tmpDir string, maxMemory int64) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -367,6 +372,65 @@ func HandleCompressImage(tmpDir string, maxMemory int64) http.HandlerFunc {
 		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
 
 		writeJSONSuccess(w, "Image compressed successfully", downloadURL, originalSize, compressedSize)
+	}
+}
+
+// HandleRemovePassword handles PDF password removal requests
+func HandleRemovePassword(tmpDir string, maxMemory int64) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Parse multipart form
+		if err := r.ParseMultipartForm(maxMemory); err != nil {
+			writeJSONError(w, "File too large or invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		// Get uploaded file
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			writeJSONError(w, "No file uploaded", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Validate PDF
+		if filepath.Ext(header.Filename) != ".pdf" {
+			writeJSONError(w, "Only PDF files are allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Get password
+		password := r.FormValue("password")
+		if password == "" {
+			writeJSONError(w, "Password is required", http.StatusBadRequest)
+			return
+		}
+
+		// Save uploaded file
+		inputPath := filepath.Join(tmpDir, generateID()+"_input.pdf")
+		if err := saveUploadedFile(file, inputPath); err != nil {
+			log.Printf("Error saving file: %v", err)
+			writeJSONError(w, "Failed to save uploaded file", http.StatusInternalServerError)
+			return
+		}
+		defer os.Remove(inputPath)
+
+		// Remove password from PDF
+		outputPath := filepath.Join(tmpDir, generateID()+"_unlocked.pdf")
+		if err := pdf.RemovePDFPassword(inputPath, outputPath, password); err != nil {
+			log.Printf("Error removing password: %v", err)
+			writeJSONError(w, "Failed to remove password. Please check if the password is correct.", http.StatusBadRequest)
+			return
+		}
+
+		// Generate download URL
+		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
+
+		writeJSONSuccess(w, "Password removed successfully. PDF is now unlocked and can be shared freely.", downloadURL, 0, 0)
 	}
 }
 

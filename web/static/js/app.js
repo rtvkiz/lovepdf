@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initCompressPage();
     } else if (document.getElementById('compressImageForm')) {
         initCompressImagePage();
+    } else if (document.getElementById('removePasswordForm')) {
+        initRemovePasswordPage();
     }
 });
 
@@ -375,6 +377,43 @@ function initCompressImagePage() {
                 showResult(message, false, data.downloadUrl);
             } else {
                 showResult(data.error || 'Compression failed', true);
+            }
+        } catch (error) {
+            showResult('Network error: ' + error.message, true);
+        }
+    });
+}
+
+// Remove password page
+function initRemovePasswordPage() {
+    const form = document.getElementById('removePasswordForm');
+    const passwordInput = document.getElementById('passwordInput');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const password = passwordInput.value.trim();
+        if (!password) {
+            showResult('Please enter the PDF password', true);
+            return;
+        }
+
+        showProgress();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/api/remove-password', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showResult(data.message, false, data.downloadUrl);
+            } else {
+                showResult(data.error || 'Failed to remove password', true);
             }
         } catch (error) {
             showResult('Network error: ' + error.message, true);
