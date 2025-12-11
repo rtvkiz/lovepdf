@@ -8,6 +8,7 @@ A local web application for PDF and image manipulation. All processing happens o
 - Merge multiple PDF files into a single document
 - Compress PDFs to reduce file size
 - Compress images (JPEG, PNG, WebP) with quality control and dimension presets (passport photos, ID photos, etc.)
+- Remove passwords from PDF for sharing
 - All processing happens locally on your machine
 - No internet connection required
 - Privacy-focused - your files never leave your computer
