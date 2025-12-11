@@ -305,6 +305,35 @@ function initCompressImagePage() {
         });
     }
 
+    // Handle dimension presets
+    const presetSelect = document.getElementById('preset');
+    const targetWidth = document.getElementById('targetWidth');
+    const targetHeight = document.getElementById('targetHeight');
+    const resizeMode = document.getElementById('resizeMode');
+
+    if (presetSelect && targetWidth && targetHeight) {
+        presetSelect.addEventListener('change', function() {
+            const presets = {
+                'passport': { width: 600, height: 600, mode: 'exact' },
+                'id': { width: 450, height: 600, mode: 'exact' },
+                'hd': { width: 1920, height: 1080, mode: 'max' },
+                'square-1024': { width: 1024, height: 1024, mode: 'exact' },
+                'square-512': { width: 512, height: 512, mode: 'exact' }
+            };
+
+            const preset = presets[this.value];
+            if (preset) {
+                targetWidth.value = preset.width;
+                targetHeight.value = preset.height;
+                resizeMode.value = preset.mode;
+            } else {
+                // Custom - clear values
+                targetWidth.value = '';
+                targetHeight.value = '';
+            }
+        });
+    }
+
     // Show image preview
     if (fileInput && previewDiv && previewImg) {
         fileInput.addEventListener('change', function(e) {

@@ -7,7 +7,7 @@ A local web application for PDF and image manipulation. All processing happens o
 - Split PDFs by page ranges or extract individual pages
 - Merge multiple PDF files into a single document
 - Compress PDFs to reduce file size
-- Compress images (JPEG, PNG, WebP) with quality control and resizing options
+- Compress images (JPEG, PNG, WebP) with quality control and dimension presets (passport photos, ID photos, etc.)
 - All processing happens locally on your machine
 - No internet connection required
 - Privacy-focused - your files never leave your computer
@@ -103,9 +103,19 @@ AUTH_USERNAME=admin AUTH_PASSWORD=secretpass ./lovepdf
 3. Adjust settings:
    - Quality: 1-100% (lower = smaller file)
    - Output format: Keep original or convert to JPEG/PNG/WebP
-   - Resize: Optionally set maximum width/height
+   - Resize options:
+     - Fit within maximum dimensions (maintains aspect ratio)
+     - Exact dimensions (stretches to fit)
+   - Dimension presets:
+     - Passport Photo (2x2 inches / 600x600px at 300 DPI)
+     - ID Photo (1.5x2 inches / 450x600px at 300 DPI)
+     - HD (1920x1080px)
+     - Square sizes (1024x1024px or 512x512px)
+     - Custom dimensions
 4. Preview the image
 5. Process and download the compressed file
+
+Note: Uses high-quality Catmull-Rom interpolation to maintain image quality during resizing.
 
 ## Building for Different Platforms
 

@@ -316,17 +316,22 @@ func HandleCompressImage(tmpDir string, maxMemory int64) http.HandlerFunc {
 			format = "same"
 		}
 
-		maxWidth := 0
-		if w := r.FormValue("maxWidth"); w != "" {
+		resizeMode := r.FormValue("resizeMode")
+		if resizeMode == "" {
+			resizeMode = "max"
+		}
+
+		targetWidth := 0
+		if w := r.FormValue("targetWidth"); w != "" {
 			if parsed, err := strconv.Atoi(w); err == nil && parsed > 0 {
-				maxWidth = parsed
+				targetWidth = parsed
 			}
 		}
 
-		maxHeight := 0
-		if h := r.FormValue("maxHeight"); h != "" {
+		targetHeight := 0
+		if h := r.FormValue("targetHeight"); h != "" {
 			if parsed, err := strconv.Atoi(h); err == nil && parsed > 0 {
-				maxHeight = parsed
+				targetHeight = parsed
 			}
 		}
 
@@ -341,10 +346,11 @@ func HandleCompressImage(tmpDir string, maxMemory int64) http.HandlerFunc {
 		// Compress image
 		outputPath := filepath.Join(tmpDir, generateID()+"_compressed"+outputExt)
 		opts := image.CompressionOptions{
-			Quality:   quality,
-			Format:    format,
-			MaxWidth:  maxWidth,
-			MaxHeight: maxHeight,
+			Quality:      quality,
+			Format:       format,
+			TargetWidth:  targetWidth,
+			TargetHeight: targetHeight,
+			ResizeMode:   resizeMode,
 		}
 
 		if err := image.CompressImage(inputPath, outputPath, opts); err != nil {

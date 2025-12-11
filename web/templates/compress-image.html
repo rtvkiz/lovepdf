@@ -54,8 +54,30 @@
                             <input type="checkbox" id="resize" name="resize">
                             <label for="resize">Resize image</label>
                             <div id="resizeOptions" style="display: none; margin-left: 30px; margin-top: 10px;">
-                                <label>Max width: <input type="number" id="maxWidth" name="maxWidth" placeholder="e.g., 1920" min="1"></label>
-                                <label style="margin-left: 15px;">Max height: <input type="number" id="maxHeight" name="maxHeight" placeholder="e.g., 1080" min="1"></label>
+                                <div style="margin-bottom: 10px;">
+                                    <label for="resizeMode">Resize mode:</label>
+                                    <select id="resizeMode" name="resizeMode">
+                                        <option value="max">Fit within maximum dimensions (maintain aspect ratio)</option>
+                                        <option value="exact">Exact dimensions (may stretch/crop)</option>
+                                    </select>
+                                </div>
+
+                                <div style="margin-bottom: 10px;">
+                                    <label for="preset">Preset sizes:</label>
+                                    <select id="preset">
+                                        <option value="">Custom</option>
+                                        <option value="passport">Passport Photo (2x2 inches / 600x600px at 300 DPI)</option>
+                                        <option value="id">ID Photo (1.5x2 inches / 450x600px at 300 DPI)</option>
+                                        <option value="hd">HD (1920x1080px)</option>
+                                        <option value="square-1024">Square 1024x1024px</option>
+                                        <option value="square-512">Square 512x512px</option>
+                                    </select>
+                                </div>
+
+                                <div id="customDimensions">
+                                    <label>Width: <input type="number" id="targetWidth" name="targetWidth" placeholder="e.g., 600" min="1"></label>
+                                    <label style="margin-left: 15px;">Height: <input type="number" id="targetHeight" name="targetHeight" placeholder="e.g., 600" min="1"></label>
+                                </div>
                             </div>
                         </div>
                     </div>

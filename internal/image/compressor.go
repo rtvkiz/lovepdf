@@ -15,10 +15,11 @@ import (
 )
 
 type CompressionOptions struct {
-	Quality   int    // 1-100
-	Format    string // "same", "jpeg", "png", "webp"
-	MaxWidth  int    // 0 means no resize
-	MaxHeight int    // 0 means no resize
+	Quality      int    // 1-100
+	Format       string // "same", "jpeg", "png", "webp"
+	TargetWidth  int    // Target width (0 means no resize)
+	TargetHeight int    // Target height (0 means no resize)
+	ResizeMode   string // "max" (fit within, maintain aspect) or "exact" (exact dimensions)
 }
 
 // CompressImage compresses an image file with the given options
@@ -43,8 +44,12 @@ func CompressImage(inputPath, outputPath string, opts CompressionOptions) error 
 	}
 
 	// Resize if needed
-	if opts.MaxWidth > 0 || opts.MaxHeight > 0 {
-		img = resizeImage(img, opts.MaxWidth, opts.MaxHeight)
+	if opts.TargetWidth > 0 || opts.TargetHeight > 0 {
+		if opts.ResizeMode == "exact" {
+			img = resizeExact(img, opts.TargetWidth, opts.TargetHeight)
+		} else {
+			img = resizeFit(img, opts.TargetWidth, opts.TargetHeight)
+		}
 	}
 
 	// Determine output format
@@ -119,8 +124,8 @@ func encodeImage(w io.Writer, img image.Image, format string, quality int) error
 	}
 }
 
-// resizeImage resizes an image to fit within maxWidth and maxHeight while preserving aspect ratio
-func resizeImage(img image.Image, maxWidth, maxHeight int) image.Image {
+// resizeFit resizes an image to fit within maxWidth and maxHeight while preserving aspect ratio
+func resizeFit(img image.Image, maxWidth, maxHeight int) image.Image {
 	bounds := img.Bounds()
 	width := bounds.Dx()
 	height := bounds.Dy()
@@ -147,7 +152,29 @@ func resizeImage(img image.Image, maxWidth, maxHeight int) image.Image {
 	// Create new image with calculated dimensions
 	dst := image.NewRGBA(image.Rect(0, 0, newWidth, newHeight))
 
-	// Use high-quality scaling
+	// Use high-quality scaling (Catmull-Rom for best quality)
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+
+	return dst
+}
+
+// resizeExact resizes an image to exact dimensions without maintaining aspect ratio
+// Uses high-quality Catmull-Rom interpolation to prevent quality degradation
+func resizeExact(img image.Image, targetWidth, targetHeight int) image.Image {
+	bounds := img.Bounds()
+
+	// Use provided dimensions or original if not specified
+	if targetWidth == 0 {
+		targetWidth = bounds.Dx()
+	}
+	if targetHeight == 0 {
+		targetHeight = bounds.Dy()
+	}
+
+	// Create new image with exact dimensions
+	dst := image.NewRGBA(image.Rect(0, 0, targetWidth, targetHeight))
+
+	// Use high-quality Catmull-Rom scaling to maintain quality
 	draw.CatmullRom.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
 
 	return dst
