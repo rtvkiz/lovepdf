@@ -67,16 +67,10 @@ Available flags:
 
 ### Enabling Authentication
 
-For shared access, enable basic authentication:
+For shared access, enable basic authentication using environment variables:
 
 ```bash
 AUTH_USERNAME=admin AUTH_PASSWORD=secretpass ./lovepdf
-```
-
-Or create a `.env` file:
-```bash
-cp .env.example .env
-# Edit .env with your credentials
 ```
 
 ### Split PDF
