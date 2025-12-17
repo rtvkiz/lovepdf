@@ -24,7 +24,7 @@ A local web application for PDF and image manipulation. All processing happens o
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/lovepdf.git
+git clone https://github.com/rtvkiz/lovepdf.git
 cd lovepdf
 
 # Install dependencies
