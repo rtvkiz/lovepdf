@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images to PDF - LovePDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="/">LovePDF</a></h1>
+            <p class="subtitle">Convert Images to PDF</p>
+        </header>
+
+        <main>
+            <div class="upload-area">
+                <form id="imageToPDFForm" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <input type="file" id="fileInput" name="files" accept=".jpg,.jpeg,.png,.tiff,.tif,.webp" multiple required>
+                        <label for="fileInput" class="upload-label">
+                            <span>Choose images or drag and drop</span>
+                        </label>
+                    </div>
+
+                    <div id="fileList" class="file-list" style="display: none;">
+                        <h3>Selected Images</h3>
+                        <div id="fileItems"></div>
+                        <p style="color: #666; font-size: 14px; margin-top: 8px;">
+                            Images will appear in the PDF in the order shown. You can drag to reorder.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Convert to PDF</button>
+                </form>
+            </div>
+
+            <div id="progress" class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Converting images to PDF...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <a href="/">← Back to Home</a>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

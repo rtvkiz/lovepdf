@@ -62,6 +62,21 @@ func RemovePasswordPage(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "remove-password.html")
 }
 
+// AddPasswordPage renders the add password page
+func AddPasswordPage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "add-password.html")
+}
+
+// RemovePagePage renders the remove page page
+func RemovePagePage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "remove-page.html")
+}
+
+// ImageToPDFPage renders the image to PDF page
+func ImageToPDFPage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "image-to-pdf.html")
+}
+
 // HandleSplit handles PDF splitting requests
 func HandleSplit(tmpDir string, maxMemory int64) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -431,6 +446,201 @@ func HandleRemovePassword(tmpDir string, maxMemory int64) http.HandlerFunc {
 		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
 
 		writeJSONSuccess(w, "Password removed successfully. PDF is now unlocked and can be shared freely.", downloadURL, 0, 0)
+	}
+}
+
+// HandleAddPassword handles PDF password addition requests
+func HandleAddPassword(tmpDir string, maxMemory int64) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Parse multipart form
+		if err := r.ParseMultipartForm(maxMemory); err != nil {
+			writeJSONError(w, "File too large or invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		// Get uploaded file
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			writeJSONError(w, "No file uploaded", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Validate PDF
+		if filepath.Ext(header.Filename) != ".pdf" {
+			writeJSONError(w, "Only PDF files are allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Get password
+		password := r.FormValue("password")
+		if password == "" {
+			writeJSONError(w, "Password is required", http.StatusBadRequest)
+			return
+		}
+
+		// Save uploaded file
+		inputPath := filepath.Join(tmpDir, generateID()+"_input.pdf")
+		if err := saveUploadedFile(file, inputPath); err != nil {
+			log.Printf("Error saving file: %v", err)
+			writeJSONError(w, "Failed to save uploaded file", http.StatusInternalServerError)
+			return
+		}
+		defer os.Remove(inputPath)
+
+		// Add password to PDF
+		outputPath := filepath.Join(tmpDir, generateID()+"_protected.pdf")
+		if err := pdf.AddPDFPassword(inputPath, outputPath, password); err != nil {
+			log.Printf("Error adding password: %v", err)
+			writeJSONError(w, "Failed to add password to PDF.", http.StatusInternalServerError)
+			return
+		}
+
+		// Generate download URL
+		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
+
+		writeJSONSuccess(w, "Password added successfully. PDF is now protected.", downloadURL, 0, 0)
+	}
+}
+
+// HandleRemovePage handles PDF page removal requests
+func HandleRemovePage(tmpDir string, maxMemory int64) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Parse multipart form
+		if err := r.ParseMultipartForm(maxMemory); err != nil {
+			writeJSONError(w, "File too large or invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		// Get uploaded file
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			writeJSONError(w, "No file uploaded", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Validate PDF
+		if filepath.Ext(header.Filename) != ".pdf" {
+			writeJSONError(w, "Only PDF files are allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Get page range
+		pageRange := r.FormValue("pageRange")
+		if pageRange == "" {
+			writeJSONError(w, "Page range is required", http.StatusBadRequest)
+			return
+		}
+
+		// Save uploaded file
+		inputPath := filepath.Join(tmpDir, generateID()+"_input.pdf")
+		if err := saveUploadedFile(file, inputPath); err != nil {
+			log.Printf("Error saving file: %v", err)
+			writeJSONError(w, "Failed to save uploaded file", http.StatusInternalServerError)
+			return
+		}
+		defer os.Remove(inputPath)
+
+		// Remove pages from PDF
+		outputPath := filepath.Join(tmpDir, generateID()+"_pages_removed.pdf")
+		if err := pdf.RemovePDFPages(inputPath, outputPath, pageRange); err != nil {
+			log.Printf("Error removing pages: %v", err)
+			writeJSONError(w, fmt.Sprintf("Failed to remove pages: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Generate download URL
+		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
+
+		writeJSONSuccess(w, "Pages removed successfully from PDF.", downloadURL, 0, 0)
+	}
+}
+
+// HandleImageToPDF handles image to PDF conversion requests
+func HandleImageToPDF(tmpDir string, maxMemory int64) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Parse multipart form
+		if err := r.ParseMultipartForm(maxMemory); err != nil {
+			writeJSONError(w, "Files too large or invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		// Get uploaded files
+		files := r.MultipartForm.File["files"]
+		if len(files) == 0 {
+			writeJSONError(w, "At least 1 image file is required", http.StatusBadRequest)
+			return
+		}
+
+		if len(files) > 50 {
+			writeJSONError(w, "Maximum 50 files allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Save all uploaded files
+		var inputPaths []string
+		for i, fileHeader := range files {
+			ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+			if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".tiff" && ext != ".tif" && ext != ".webp" {
+				writeJSONError(w, "Only JPEG, PNG, TIFF, and WebP images are allowed", http.StatusBadRequest)
+				// Clean up previously saved files
+				for _, path := range inputPaths {
+					os.Remove(path)
+				}
+				return
+			}
+
+			file, err := fileHeader.Open()
+			if err != nil {
+				writeJSONError(w, "Failed to read uploaded file", http.StatusBadRequest)
+				return
+			}
+			defer file.Close()
+
+			inputPath := filepath.Join(tmpDir, fmt.Sprintf("%s_input_%d%s", generateID(), i, ext))
+			if err := saveUploadedFile(file, inputPath); err != nil {
+				log.Printf("Error saving file: %v", err)
+				writeJSONError(w, "Failed to save uploaded file", http.StatusInternalServerError)
+				return
+			}
+			inputPaths = append(inputPaths, inputPath)
+		}
+
+		// Clean up input files after processing
+		defer func() {
+			for _, path := range inputPaths {
+				os.Remove(path)
+			}
+		}()
+
+		// Convert images to PDF
+		outputPath := filepath.Join(tmpDir, generateID()+"_images_to_pdf.pdf")
+		if err := pdf.ConvertImagesToPDF(inputPaths, outputPath); err != nil {
+			log.Printf("Error converting images to PDF: %v", err)
+			writeJSONError(w, fmt.Sprintf("Failed to convert images to PDF: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Generate download URL
+		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
+
+		writeJSONSuccess(w, "Images converted to PDF successfully.", downloadURL, 0, 0)
 	}
 }
 

@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
         initCompressImagePage();
     } else if (document.getElementById('removePasswordForm')) {
         initRemovePasswordPage();
+    } else if (document.getElementById('addPasswordForm')) {
+        initAddPasswordPage();
+    } else if (document.getElementById('removePageForm')) {
+        initRemovePagePage();
+    } else if (document.getElementById('imageToPDFForm')) {
+        initImageToPDFPage();
     }
 });
 
@@ -414,6 +420,186 @@ function initRemovePasswordPage() {
                 showResult(data.message, false, data.downloadUrl);
             } else {
                 showResult(data.error || 'Failed to remove password', true);
+            }
+        } catch (error) {
+            showResult('Network error: ' + error.message, true);
+        }
+    });
+}
+
+// Add password page
+function initAddPasswordPage() {
+    const form = document.getElementById('addPasswordForm');
+    const passwordInput = document.getElementById('passwordInput');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const password = passwordInput.value.trim();
+        if (!password) {
+            showResult('Please enter a password', true);
+            return;
+        }
+
+        showProgress();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/api/add-password', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showResult(data.message, false, data.downloadUrl);
+            } else {
+                showResult(data.error || 'Failed to add password', true);
+            }
+        } catch (error) {
+            showResult('Network error: ' + error.message, true);
+        }
+    });
+}
+
+// Remove page page
+function initRemovePagePage() {
+    const form = document.getElementById('removePageForm');
+    const pageRangeInput = document.getElementById('pageRangeInput');
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const pageRange = pageRangeInput.value.trim();
+        if (!pageRange) {
+            showResult('Please enter page numbers to remove', true);
+            return;
+        }
+
+        showProgress();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/api/remove-page', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showResult(data.message, false, data.downloadUrl);
+            } else {
+                showResult(data.error || 'Failed to remove pages', true);
+            }
+        } catch (error) {
+            showResult('Network error: ' + error.message, true);
+        }
+    });
+}
+
+// Images to PDF page
+function initImageToPDFPage() {
+    const form = document.getElementById('imageToPDFForm');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const fileItems = document.getElementById('fileItems');
+    let selectedFiles = [];
+
+    fileInput.addEventListener('change', function(e) {
+        selectedFiles = Array.from(e.target.files);
+        updateFileList();
+    });
+
+    function updateFileList() {
+        if (selectedFiles.length === 0) {
+            fileList.style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            return;
+        }
+
+        fileList.style.display = 'block';
+        document.getElementById('submitBtn').disabled = false;
+
+        fileItems.innerHTML = selectedFiles.map((file, index) => `
+            <div class="file-item" draggable="true" data-index="${index}">
+                <span class="file-item-name">${index + 1}. ${file.name}</span>
+                <span class="file-item-remove" onclick="removeImageFile(${index})">✕</span>
+            </div>
+        `).join('');
+
+        // Add drag and drop for reordering
+        const items = fileItems.querySelectorAll('.file-item');
+        items.forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragover', handleDragOverItem);
+            item.addEventListener('drop', handleDropItem);
+            item.addEventListener('dragend', handleDragEnd);
+        });
+    }
+
+    window.removeImageFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileList();
+    };
+
+    let draggedIndex;
+
+    function handleDragStart(e) {
+        draggedIndex = parseInt(e.currentTarget.dataset.index);
+        e.currentTarget.classList.add('dragging');
+    }
+
+    function handleDragOverItem(e) {
+        e.preventDefault();
+    }
+
+    function handleDropItem(e) {
+        e.preventDefault();
+        const dropIndex = parseInt(e.currentTarget.dataset.index);
+
+        if (draggedIndex !== dropIndex) {
+            const draggedFile = selectedFiles[draggedIndex];
+            selectedFiles.splice(draggedIndex, 1);
+            selectedFiles.splice(dropIndex, 0, draggedFile);
+            updateFileList();
+        }
+    }
+
+    function handleDragEnd(e) {
+        e.currentTarget.classList.remove('dragging');
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (selectedFiles.length === 0) {
+            showResult('Please select at least 1 image file', true);
+            return;
+        }
+
+        showProgress();
+
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        try {
+            const response = await fetch('/api/image-to-pdf', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showResult(data.message, false, data.downloadUrl);
+            } else {
+                showResult(data.error || 'Conversion failed', true);
             }
         } catch (error) {
             showResult('Network error: ' + error.message, true);

@@ -46,6 +46,9 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/compress", handlers.CompressPage)
 	mux.HandleFunc("/compress-image", handlers.CompressImagePage)
 	mux.HandleFunc("/remove-password", handlers.RemovePasswordPage)
+	mux.HandleFunc("/add-password", handlers.AddPasswordPage)
+	mux.HandleFunc("/remove-page", handlers.RemovePagePage)
+	mux.HandleFunc("/image-to-pdf", handlers.ImageToPDFPage)
 
 	// API routes
 	mux.HandleFunc("/api/split", handlers.HandleSplit(s.tmpDir, s.maxMemory))
@@ -53,6 +56,9 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/compress", handlers.HandleCompress(s.tmpDir, s.maxMemory))
 	mux.HandleFunc("/api/compress-image", handlers.HandleCompressImage(s.tmpDir, s.maxMemory))
 	mux.HandleFunc("/api/remove-password", handlers.HandleRemovePassword(s.tmpDir, s.maxMemory))
+	mux.HandleFunc("/api/add-password", handlers.HandleAddPassword(s.tmpDir, s.maxMemory))
+	mux.HandleFunc("/api/remove-page", handlers.HandleRemovePage(s.tmpDir, s.maxMemory))
+	mux.HandleFunc("/api/image-to-pdf", handlers.HandleImageToPDF(s.tmpDir, s.maxMemory))
 	mux.HandleFunc("/download/", handlers.HandleDownload(s.tmpDir))
 
 	// Wrap with middleware
