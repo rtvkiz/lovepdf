@@ -57,6 +57,11 @@ func CompressImagePage(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "compress-image.html")
 }
 
+// CompressGIFPage renders the GIF compression page
+func CompressGIFPage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate(w, "compress-gif.html")
+}
+
 // RemovePasswordPage renders the remove password page
 func RemovePasswordPage(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "remove-password.html")
@@ -388,6 +393,124 @@ func HandleCompressImage(tmpDir string, maxMemory int64) http.HandlerFunc {
 
 		writeJSONSuccess(w, "Image compressed successfully", downloadURL, originalSize, compressedSize)
 	}
+}
+
+// HandleCompressGIF handles GIF compression requests
+func HandleCompressGIF(tmpDir string, maxMemory int64) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Parse multipart form
+		if err := r.ParseMultipartForm(maxMemory); err != nil {
+			writeJSONError(w, "File too large or invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		// Get uploaded file
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			writeJSONError(w, "No file uploaded", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Validate GIF file
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		if ext != ".gif" {
+			writeJSONError(w, "Only GIF files are allowed", http.StatusBadRequest)
+			return
+		}
+
+		// Save uploaded file
+		inputPath := filepath.Join(tmpDir, generateID()+"_input.gif")
+		if err := saveUploadedFile(file, inputPath); err != nil {
+			log.Printf("Error saving file: %v", err)
+			writeJSONError(w, "Failed to save uploaded file", http.StatusInternalServerError)
+			return
+		}
+		defer os.Remove(inputPath)
+
+		// Get original file size
+		originalInfo, _ := os.Stat(inputPath)
+		originalSize := originalInfo.Size()
+
+		// Parse compression options
+		opts := image.GIFCompressionOptions{
+			ColorCount:     parseIntWithDefault(r.FormValue("colorCount"), 256, 2, 256),
+			ResizePercent:  parseIntWithDefault(r.FormValue("resizePercent"), 100, 10, 100),
+			LossyLevel:     parseIntWithDefault(r.FormValue("lossyLevel"), 0, 0, 100),
+			OptimizeFrames: r.FormValue("optimizeFrames") == "true",
+			FrameSkip:      parseIntWithDefault(r.FormValue("frameSkip"), 0, 0, 10),
+		}
+
+		// Handle presets
+		if preset := r.FormValue("preset"); preset != "" {
+			opts = applyGIFPreset(preset, opts)
+		}
+
+		// Compress GIF
+		outputPath := filepath.Join(tmpDir, generateID()+"_compressed.gif")
+		if err := image.CompressGIF(inputPath, outputPath, opts); err != nil {
+			log.Printf("Error compressing GIF: %v", err)
+			writeJSONError(w, fmt.Sprintf("Failed to compress GIF: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Get compressed file size
+		compressedInfo, _ := os.Stat(outputPath)
+		compressedSize := compressedInfo.Size()
+
+		// Generate download URL
+		downloadURL := fmt.Sprintf("/download/%s", filepath.Base(outputPath))
+
+		writeJSONSuccess(w, "GIF compressed successfully", downloadURL, originalSize, compressedSize)
+	}
+}
+
+// parseIntWithDefault parses an integer from string with bounds checking
+func parseIntWithDefault(value string, defaultVal, min, max int) int {
+	if value == "" {
+		return defaultVal
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < min || parsed > max {
+		return defaultVal
+	}
+	return parsed
+}
+
+// applyGIFPreset applies compression presets
+func applyGIFPreset(preset string, opts image.GIFCompressionOptions) image.GIFCompressionOptions {
+	switch preset {
+	case "light":
+		opts.ColorCount = 128
+		opts.ResizePercent = 90
+		opts.OptimizeFrames = true
+		opts.FrameSkip = 0
+		opts.LossyLevel = 0
+	case "medium":
+		opts.ColorCount = 64
+		opts.ResizePercent = 75
+		opts.OptimizeFrames = true
+		opts.FrameSkip = 0
+		opts.LossyLevel = 0
+	case "high":
+		opts.ColorCount = 32
+		opts.ResizePercent = 50
+		opts.OptimizeFrames = true
+		opts.FrameSkip = 1
+		opts.LossyLevel = 0
+	case "maximum":
+		opts.ColorCount = 16
+		opts.ResizePercent = 40
+		opts.OptimizeFrames = true
+		opts.FrameSkip = 2
+		opts.LossyLevel = 50
+	}
+	return opts
 }
 
 // HandleRemovePassword handles PDF password removal requests

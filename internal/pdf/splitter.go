@@ -2,6 +2,8 @@ package pdf
 
 import (
 	"archive/zip"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +13,13 @@ import (
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
+
+// generateID creates a unique identifier for file naming
+func generateID() string {
+	bytes := make([]byte, 8)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
 
 type SplitMode string
 
@@ -29,22 +38,28 @@ func SplitPDF(inputPath, outputDir string, mode SplitMode, pageRange string) (st
 
 // splitAllPages splits PDF into individual pages
 func splitAllPages(inputPath, outputDir string) (string, error) {
-	// Create output directory
-	splitDir := filepath.Join(outputDir, "split_pages")
+	// Create unique output directory for this split operation
+	uniqueID := generateID()
+	splitDir := filepath.Join(outputDir, "split_"+uniqueID)
 	if err := os.MkdirAll(splitDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	// Split into individual pages
 	if err := api.SplitFile(inputPath, splitDir, 1, nil); err != nil {
+		os.RemoveAll(splitDir) // Clean up on error
 		return "", fmt.Errorf("failed to split PDF: %w", err)
 	}
 
-	// Create ZIP file
-	zipPath := filepath.Join(outputDir, "split_pages.zip")
+	// Create ZIP file with unique name
+	zipPath := filepath.Join(outputDir, "split_"+uniqueID+".zip")
 	if err := zipDirectory(splitDir, zipPath); err != nil {
+		os.RemoveAll(splitDir) // Clean up on error
 		return "", fmt.Errorf("failed to create ZIP: %w", err)
 	}
+
+	// Clean up the temporary split directory after zipping
+	os.RemoveAll(splitDir)
 
 	return zipPath, nil
 }
@@ -61,7 +76,8 @@ func splitByRange(inputPath, outputDir, pageRange string) (string, error) {
 		return "", fmt.Errorf("no valid pages specified")
 	}
 
-	outputPath := filepath.Join(outputDir, "extracted_pages.pdf")
+	// Use unique filename for extracted pages
+	outputPath := filepath.Join(outputDir, "extracted_"+generateID()+".pdf")
 
 	// Extract specified pages
 	if err := api.ExtractPagesFile(inputPath, outputPath, pages, nil); err != nil {

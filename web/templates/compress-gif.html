@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compress GIF - LovePDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="/">LovePDF</a></h1>
+            <p class="subtitle">Compress GIF</p>
+        </header>
+
+        <main>
+            <div class="upload-area">
+                <form id="compressGIFForm" enctype="multipart/form-data">
+                    <div class="file-upload">
+                        <input type="file" id="fileInput" name="file" accept="image/gif" required>
+                        <label for="fileInput" class="upload-label">
+                            <span>Choose GIF or drag and drop</span>
+                            <span class="file-types">(GIF files - static or animated)</span>
+                        </label>
+                    </div>
+
+                    <div id="fileInfo" class="file-info" style="display: none;"></div>
+
+                    <div id="gifPreview" class="image-preview" style="display: none;">
+                        <h3>Preview:</h3>
+                        <img id="previewImg" src="" alt="Preview">
+                        <p id="gifInfo" class="option-hint"></p>
+                    </div>
+
+                    <div class="options">
+                        <h3>Compression Settings</h3>
+
+                        <div class="option">
+                            <label for="preset">Compression Level:</label>
+                            <select id="preset" name="preset">
+                                <option value="light">Light (128 colors, 90% size)</option>
+                                <option value="medium" selected>Medium (64 colors, 75% size)</option>
+                                <option value="high">High (32 colors, 50% size)</option>
+                                <option value="maximum">Maximum (16 colors, 40% size)</option>
+                                <option value="custom">Custom Settings</option>
+                            </select>
+                        </div>
+
+                        <div id="advancedOptions" style="display: none;">
+                            <div class="option">
+                                <label for="colorCount">Colors: <span id="colorCountValue">256</span></label>
+                                <input type="range" id="colorCount" name="colorCount" min="2" max="256" value="256" step="2">
+                                <p class="option-hint">Fewer colors = smaller file (GIF max: 256)</p>
+                            </div>
+
+                            <div class="option">
+                                <label for="resizePercent">Size: <span id="resizeValue">100</span>%</label>
+                                <input type="range" id="resizePercent" name="resizePercent" min="10" max="100" value="100">
+                                <p class="option-hint">Reduce dimensions for smaller files</p>
+                            </div>
+
+                            <div class="option">
+                                <input type="checkbox" id="optimizeFrames" name="optimizeFrames" value="true" checked>
+                                <label for="optimizeFrames">Optimize animation frames</label>
+                                <p class="option-hint">Remove redundant pixels between frames</p>
+                            </div>
+
+                            <div class="option">
+                                <label for="frameSkip">Skip frames:</label>
+                                <select id="frameSkip" name="frameSkip">
+                                    <option value="0">Keep all frames</option>
+                                    <option value="1">Skip every 2nd frame</option>
+                                    <option value="2">Skip every 3rd frame</option>
+                                    <option value="3">Skip every 4th frame</option>
+                                </select>
+                                <p class="option-hint">Reduces animation smoothness but decreases file size</p>
+                            </div>
+
+                            <div class="option">
+                                <label for="lossyLevel">Lossy compression: <span id="lossyValue">0</span>%</label>
+                                <input type="range" id="lossyLevel" name="lossyLevel" min="0" max="100" value="0">
+                                <p class="option-hint">Higher = more compression, more artifacts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Compress GIF</button>
+                </form>
+            </div>
+
+            <div id="progress" class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">Compressing GIF...</p>
+            </div>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </main>
+
+        <footer>
+            <a href="/">← Back to Home</a>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

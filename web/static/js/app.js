@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initCompressPage();
     } else if (document.getElementById('compressImageForm')) {
         initCompressImagePage();
+    } else if (document.getElementById('compressGIFForm')) {
+        initCompressGIFPage();
     } else if (document.getElementById('removePasswordForm')) {
         initRemovePasswordPage();
     } else if (document.getElementById('addPasswordForm')) {
@@ -379,6 +381,92 @@ function initCompressImagePage() {
                     const originalMB = (data.originalSize / (1024 * 1024)).toFixed(2);
                     const compressedMB = (data.compressedSize / (1024 * 1024)).toFixed(2);
                     message += `<br>Original: ${originalMB} MB → Compressed: ${compressedMB} MB (${reduction}% reduction)`;
+                }
+                showResult(message, false, data.downloadUrl);
+            } else {
+                showResult(data.error || 'Compression failed', true);
+            }
+        } catch (error) {
+            showResult('Network error: ' + error.message, true);
+        }
+    });
+}
+
+// Compress GIF page
+function initCompressGIFPage() {
+    const form = document.getElementById('compressGIFForm');
+    const fileInput = document.getElementById('fileInput');
+    const presetSelect = document.getElementById('preset');
+    const advancedOptions = document.getElementById('advancedOptions');
+    const previewDiv = document.getElementById('gifPreview');
+    const previewImg = document.getElementById('previewImg');
+    const gifInfo = document.getElementById('gifInfo');
+
+    // Update slider value displays
+    const sliders = [
+        { input: 'colorCount', display: 'colorCountValue' },
+        { input: 'resizePercent', display: 'resizeValue' },
+        { input: 'lossyLevel', display: 'lossyValue' }
+    ];
+
+    sliders.forEach(({ input, display }) => {
+        const slider = document.getElementById(input);
+        const displayEl = document.getElementById(display);
+        if (slider && displayEl) {
+            slider.addEventListener('input', function() {
+                displayEl.textContent = this.value;
+            });
+        }
+    });
+
+    // Toggle advanced options when "custom" is selected
+    if (presetSelect && advancedOptions) {
+        presetSelect.addEventListener('change', function() {
+            advancedOptions.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+    }
+
+    // Show GIF preview
+    if (fileInput && previewDiv && previewImg) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'image/gif') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.style.display = 'block';
+                    if (gifInfo) {
+                        const sizeKB = (file.size / 1024).toFixed(1);
+                        gifInfo.textContent = 'File size: ' + sizeKB + ' KB';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        showProgress();
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/api/compress-gif', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                let message = data.message;
+                if (data.originalSize && data.compressedSize) {
+                    const reduction = ((1 - data.compressedSize / data.originalSize) * 100).toFixed(1);
+                    const originalKB = (data.originalSize / 1024).toFixed(1);
+                    const compressedKB = (data.compressedSize / 1024).toFixed(1);
+                    message += `<br>Original: ${originalKB} KB → Compressed: ${compressedKB} KB (${reduction}% reduction)`;
                 }
                 showResult(message, false, data.downloadUrl);
             } else {
