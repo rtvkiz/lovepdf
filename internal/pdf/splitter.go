@@ -38,10 +38,10 @@ func SplitPDF(inputPath, outputDir string, mode SplitMode, pageRange string) (st
 
 // splitAllPages splits PDF into individual pages
 func splitAllPages(inputPath, outputDir string) (string, error) {
-	// Create unique output directory for this split operation
-	uniqueID := generateID()
-	splitDir := filepath.Join(outputDir, "split_"+uniqueID)
-	if err := os.MkdirAll(splitDir, 0755); err != nil {
+	// Create unique output directory for this split operation using MkdirTemp
+	// This guarantees a unique directory name and avoids collisions
+	splitDir, err := os.MkdirTemp(outputDir, "split_")
+	if err != nil {
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
@@ -51,8 +51,10 @@ func splitAllPages(inputPath, outputDir string) (string, error) {
 		return "", fmt.Errorf("failed to split PDF: %w", err)
 	}
 
-	// Create ZIP file with unique name
-	zipPath := filepath.Join(outputDir, "split_"+uniqueID+".zip")
+	// Create ZIP file with unique name based on the split directory name
+	zipName := filepath.Base(splitDir) + ".zip"
+	zipPath := filepath.Join(outputDir, zipName)
+
 	if err := zipDirectory(splitDir, zipPath); err != nil {
 		os.RemoveAll(splitDir) // Clean up on error
 		return "", fmt.Errorf("failed to create ZIP: %w", err)
@@ -76,11 +78,19 @@ func splitByRange(inputPath, outputDir, pageRange string) (string, error) {
 		return "", fmt.Errorf("no valid pages specified")
 	}
 
-	// Use unique filename for extracted pages
-	outputPath := filepath.Join(outputDir, "extracted_"+generateID()+".pdf")
+	// Create temp file for output to ensure uniqueness
+	tmpFile, err := os.CreateTemp(outputDir, "extracted_*.pdf")
+	if err != nil {
+		return "", fmt.Errorf("failed to create output file: %w", err)
+	}
+	outputPath := tmpFile.Name()
+	tmpFile.Close()
+	// We only needed the name, ExtractPagesFile will overwrite/write to it
+	// But ExtractPagesFile expects the file to NOT be open.
 
 	// Extract specified pages
 	if err := api.ExtractPagesFile(inputPath, outputPath, pages, nil); err != nil {
+		os.Remove(outputPath)
 		return "", fmt.Errorf("failed to extract pages: %w", err)
 	}
 
