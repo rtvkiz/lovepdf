@@ -17,6 +17,7 @@ A local web application for PDF and image manipulation. All processing happens o
 
 - Go 1.24 or higher (for building from source)
 - Linux, macOS, or Windows
+- Alternatively, Podman or Docker to run it in a container
 
 ## Installation
 
@@ -46,6 +47,49 @@ Download the latest release for your platform from the releases page and run it:
 ```bash
 ./lovepdf
 ```
+
+### Option 3: Run in a Container (Podman or Docker)
+
+No Go toolchain is needed on the host. The commands below use `podman`; they work the same with `docker`.
+
+```bash
+# Build the image
+podman build -t lovepdf .
+
+# Run it
+podman run -d --name lovepdf -p 8080:8080 lovepdf
+```
+
+Open your browser to `http://localhost:8080`
+
+To publish on a different host port, change the left side of `-p`:
+
+```bash
+podman run -d --name lovepdf -p 8081:8080 lovepdf
+```
+
+Enable basic authentication with environment variables:
+
+```bash
+podman run -d --name lovepdf -p 8080:8080 \
+  -e AUTH_USERNAME=admin -e AUTH_PASSWORD=secretpass lovepdf
+```
+
+Command line flags can be appended after the image name. This replaces the default arguments, so keep `-tmp /app/tmp`:
+
+```bash
+podman run -d --name lovepdf -p 8080:8080 lovepdf \
+  -port :8080 -tmp /app/tmp -max-memory 209715200
+```
+
+View logs and stop the container:
+
+```bash
+podman logs -f lovepdf
+podman stop lovepdf && podman rm lovepdf
+```
+
+The image is a multi-stage build on a distroless base and runs as a non-root user. Uploaded and processed files live only in `/app/tmp` inside the container and are discarded when the container is removed.
 
 ## Usage
 
@@ -148,6 +192,7 @@ lovepdf/
 │   ├── templates/      # HTML templates
 │   └── static/         # CSS and JavaScript
 ├── tmp/                # Temporary file storage (auto-cleaned)
+├── Dockerfile          # Container image definition
 ├── go.mod              # Go module definition
 └── README.md           # This file
 ```

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+*.md
+LICENSE
+tmp/
+lovepdf
+lovepdf.exe
+lovepdf-mac
+lovepdf-linux
+.vscode/
+.idea/
+.DS_Store
+.env
